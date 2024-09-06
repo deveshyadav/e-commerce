@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+    environment {
+        PROJECT_ID = 'sage-loop-432012-g7'  // Set your GCP project ID here
+        REGISTRY = 'asia-south1-docker.pkg.dev'  // GCP Artifact Registry location
+        REPOSITORY = 'sage-loop-432012-g7/ecom-repo'  // Set your repo in GCP Artifact Registry
+        CREDENTIALS_ID = 'gcr-docker-creds'  // GCP Docker credentials stored in Jenkins
+        K8S_NAMESPACE = 'default'  // Kubernetes namespace
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clone the Git repository for your project
+                git branch: 'main', url: 'https://github.com/your-username/your-repo.git'
+            }
+        }
+        stage('Build and Push Docker Images') {
+            steps {
+                script {
+                    // Define your services here
+                    def services = ['account-service', 'customer-service', 'product-service']
+
+                    for (service in services) {
+                        dir(service) {
+                            // Docker image tag with GCP Artifact Registry
+                            def image = "${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${service}:latest"
+
+                            // Build Docker image for the service
+                            docker.build(image)
+
+                            // Push the Docker image to Google Artifact Registry
+                            docker.withRegistry("https://${REGISTRY}", CREDENTIALS_ID) {
+                                docker.image(image).push()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Update Kubernetes Deployment') {
+            steps {
+                script {
+                    def services = ['account-service', 'customer-service', 'product-service']
+
+                    for (service in services) {
+                        // Set the new image tag for Kubernetes deployment
+                        def newImage = "${REGISTRY}/${REPOSITORY}/${service}:latest"
+
+                        // Update the Kubernetes deployment with the new image
+                        sh "kubectl set image deployment/${service} ${service}=${newImage} -n ${K8S_NAMESPACE}"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Build, Push, and Kubernetes Deployment updated successfully!'
+        }
+        failure {
+            echo 'Something went wrong. Please check the logs.'
+        }
+    }
+}

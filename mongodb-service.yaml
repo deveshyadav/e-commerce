@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service
-  namespace: mongodb
+  name: mydb
+  namespace: default
 spec:
   selector:
     app: mongodb
@@ -10,3 +10,5 @@ spec:
     - protocol: TCP
       port: 27017
       targetPort: 27017
+      nodePort: 30003  # Choose a port in the NodePort range (30000-32767)
+  type: NodePort

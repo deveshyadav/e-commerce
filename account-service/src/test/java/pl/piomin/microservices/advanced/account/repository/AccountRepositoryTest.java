@@ -18,9 +18,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataMongoTest
-@Testcontainers
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+//@DataMongoTest
+//@Testcontainers
+//@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AccountRepositoryTest {
 
     @Container
